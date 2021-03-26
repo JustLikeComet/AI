@@ -128,6 +128,7 @@ def geneTrainNpy(image_path,mask_path,flag_multi_class = False,num_class = 2,ima
     image_arr = []
     mask_arr = []
     for index,item in enumerate(image_name_arr):
+        print("%d name %s"%(index, item))
         img = io.imread(item,as_gray = image_as_gray)
         img = np.reshape(img,img.shape + (1,)) if image_as_gray else img
         mask = io.imread(item.replace(image_path,mask_path).replace(image_prefix,mask_prefix),as_gray = mask_as_gray)
@@ -150,34 +151,11 @@ def testGenerator(test_path,num_image = 30,target_size = (256,256),flag_multi_cl
         img = np.reshape(img,(1,)+img.shape)
         yield img
 
-
-Sky = [128,128,128]
-Building = [128,0,0]
-Pole = [192,192,128]
-Road = [128,64,128]
-Pavement = [60,40,222]
-Tree = [128,128,0]
-SignSymbol = [192,128,128]
-Fence = [64,64,128]
-Car = [64,0,128]
-Pedestrian = [64,64,0]
-Bicyclist = [0,128,192]
-Unlabelled = [0,0,0]
-
-COLOR_DICT = np.array([Sky, Building, Pole, Road, Pavement,
-                          Tree, SignSymbol, Fence, Car, Pedestrian, Bicyclist, Unlabelled])
-
-
-def labelVisualize(num_class,color_dict,img):
-    img = img[:,:,0] if len(img.shape) == 3 else img
-    img_out = np.zeros(img.shape + (3,))
-    for i in range(num_class):
-        img_out[img == i,:] = color_dict[i]
-    return img_out / 255
-
 def saveResult(save_path,npyfile,flag_multi_class = False,num_class = 2):
     for i,item in enumerate(npyfile):
-        img = labelVisualize(num_class,COLOR_DICT,item) if flag_multi_class else item[:,:,0]
+        img = item[:,:,0]
+        img[img > 0.5] = 255
+        img[img <= 0.5] = 0
         io.imsave(os.path.join(save_path,"%d_predict.png"%i),img)
 
 
@@ -217,7 +195,7 @@ def unetMain():
             train_step.run(feed_dict={x_image: trainImages[startIndex:startIndex+batchsize], y_: trainMaskImages[startIndex:startIndex+batchsize], keep_prob: 0.5})
 
     results = upsideLayer.eval(feed_dict={x_image: trainImages[0:1], keep_prob: 1.0})
-    saveResult("data/membrane/test",results)
+    saveResult("data/membrane/test2",results)
 
 unetMain()
 
